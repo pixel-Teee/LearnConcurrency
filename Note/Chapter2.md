@@ -725,7 +725,183 @@ C++标准库的一个特性，帮助这里，是std::thread::hardware_concurrenc
 
 这只是一个线索，函数可能返回0，如果这个信息是不可用的，但是它可以是一个有用的指导，在线程之间分离一个任务。
 
-//29
+
+
+下面是一个并行版本的std::accumulate。它在线程之间分割了任务，每个线程少量的元素，目的是为了避免太多线程的消耗。这个实现假设了没有操作会抛出异常，即使异常是可能的。
+
+std::thread构造函数会抛出异常，如果它不能开始一个新线程的执行。
+
+处理异常在第8章。
+
+```c++
+	template<typename Iterator, typename T>
+	struct accumulate_block
+	{
+		void operator()(Iterator first, Iterator last, T& result)
+		{
+			result = std::accumulate(first, last, result);
+		}
+	};
+
+	template<typename Iterator, typename T>
+	T parallel_accumulate(Iterator first, Iterator last, T init)
+	{
+		unsigned long const length = std::distance(first, last);
+
+		//if length == 0, return init
+		if(!length)
+			return init;
+
+		unsigned long const min_per_thread = 25;
+		unsigned long const max_threads = 
+			(length + min_per_thread - 1) / min_per_thread;
+
+		unsigned long const hardware_threads = 
+			(length + min_per_thread - 1) / min_per_thread;
+
+		unsigned long const num_threads = 
+			std::min(hardware_threads != 0 ? hardware_threads : 2, max_threads);
+
+		//number of elements processed per thread
+		unsigned long const block_size = length / num_threads;
+
+		std::vector<T> results(num_threads);
+
+		//you already have one main thread
+		std::vector<std::thread> threads(num_threads - 1);
+
+		Iterator block_start = first;
+
+		for (unsigned long i = 0; i < (num_threads - 1); ++i)
+		{
+			Iterator block_end = block_start;
+
+			std::advance(block_end, block_size);
+
+			threads[i] = std::thread(
+				accumulate_block<Iterator, T>(),
+				block_start, block_end, std::ref(results[i])
+			);
+
+			block_start = block_end;
+		}
+
+		//let the main thread process the final block
+		accumulate_block<Iterator, T>()(
+			block_start, last, results[num_threads - 1]);
+		
+		//join
+		std::for_each(threads.begin(), threads.end(),
+			std::mem_fn(&std::thread::join));
+
+		return std::accumulate(results.begin(), results.end(), init);
+	}
+```
+
+
+
+这个代码是严格的，要求是**前向迭代器**，然而std::accumulate可以工作在单个pass的输入迭代器上，
+
+并且T必须是默认构造的，从而可以创建results vector。
+
+
+
+并行算法会在第8章讲述。你也不能直接从线程直接返回值，你必须传递相关的入口点的引用在results vector里面。
+
+可选的方式，从线程返回结果，通过使用futures。
+
+
+
+**有时候，需要能够标识线程。**
+
+
+
+标签派发。
+
+如何判断一个迭代器是前向迭代器，如果是标准库的，**通过Iterator_traits&lt;Iterator&gt;::itergator_category获取。**
+
+
+
+# Identifying threads
+
+
+
+线程标识符是std::thread::id的类型，可以在两种方式上取得。
+
+第一种方式，一个线程的标识符可以从它的关联的std::thread对象上获取，**通过调用get_id()成员函数获取。**
+
+
+
+如果std::thread对象没有一个相关的执行的线程，**调用get_id()**将返回一个默认构造std::thread::id对象，表示没有任何线程。可选的方式，现在线程的标识符，**可以通过调用std::this_thread::get_id()获取**，被定义在&lt;thread&gt;头文件中。
+
+
+
+对象的类型std::thread::id可以被轻松地拷贝和比较。如果两个对象的类型std::thread::id是相等的，它们表示相同的thread，或者两个都持有不是任何线程的值。
+
+
+
+std::thread::id提供了完整比较操作的集合。
+
+允许它们被用来作为关联容器的key。
+
+
+
+标准库也提供了std::hash&lt;std::thread::id&gt;，所以类型std::thread::id的值可以被用来作为新的无序关联容器的key。
+
+
+
+std::thread::id的实例经常被用来检查**是否一个线程需要去执行一些操作**。
+
+
+
+比如上面那个累加算法，用来开启其它线程的主线程可能需要去执行它的工作稍微不同，在算法中。
+
+这种情况下，它可以存储std::this_thread::get_id()的结果，在开启其它线程之前，然后算法的核心部分，
+
+可以检测它自己的线程ID通过存储的值。
+
+
+
+```c++
+std::thread::id master_thread;
+
+void some_core_part_of_algorithm()
+{
+	if(std::this_thread::get_id() == master_thread)
+	{
+		do_master_thread_work();
+	}
+	do_common_work();
+}
+```
+
+
+
+可选地，现在线程的std::thread::id可以被存储在数据结构中作为操作的一部分。
+
+之后的操作在同样的数据结构上，可以检查存储的ID对比线程的ID，执行操作去检查什么操作被允许和需要的。
+
+
+
+同样地，线程ID可以被用来作为key到关联容器内，确切的数据需要被关联到一个线程，并且可选的机制，**例如**
+
+**线程局部存储是不正确的。**这样的一个容器，例如，可以被用来控制线程去存储信息，关于每个线程，在它的控制下，或者在线程之间传递信息。
+
+
+
+std::this_thread::get_id()是依赖于实现的。可以用来log或者debug的。
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

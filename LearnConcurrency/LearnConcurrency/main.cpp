@@ -1,14 +1,11 @@
 #include <iostream>
-#include <thread>
+#include <vector>
 
-void hello()
-{
-	std::cout << "Hello Concurrent World\n";
-}
+#include "Chapter2.h"
 
 int main()
 {
-	std::thread t(hello);
-	t.join();
+	Chapter2::M_Test();
+
 	return 0;
 }
