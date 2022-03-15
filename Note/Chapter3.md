@@ -806,11 +806,65 @@ try_lock()工作起来就像lock()一样，除了如果调用try_lock()在intern
 
 就像std::lock_guard，**这是一个类模板被参数化mutex类型，并且它提供了同样的RAII风格的管理**，就像std::lock_guard一样，但是一些更多的灵活性。
 
+## Flexible locking with std::unique_lock
+
+使用灵活的锁std::unique_lock。
 
 
 
+std::unqiue_lock比std::lock_guard提高了一些灵活性，**通过释放invariant。**
 
 
+
+std::unqiue_lock不总是拥有它关联的mutex。
+
+可以传递std::adopt_lock作为第二个参数到构造函数，让lock对象管理lock在一个mutex上，也可以传递
+
+std::defer_lock作为第二个参数，标识mutex在构造函数里面是解锁的。
+
+
+
+lock可以**之后被请求**，通过调用lock()在std::unique_lock对象上(不是mutex)，或者通过传递std::unqiue_lock
+
+它自己到std::lock()上。
+
+
+
+std::unique_lock相比于std::lock_guard需要更多的空间，还有一点比例的缓慢程序。
+
+灵活性，允许std::unique_lock实例不需要去拥有互斥锁mutex是有代价的，这个信息必须被存储，并且必须被更新。
+
+![image-20220315212601142](../Image/3.9.png)
+
+std::unique_lock对象可以被传递到std::lock，因为std::unqiue_lock提供了lock()，try_lock()，
+
+还有unlock()成员函数。
+
+在潜在的mutex下，同名的成员函数被转发去做实际的工作，并且在内部更新了std::unique_lock实例的flag，
+
+**去标识是否mutex现在是否被那个实例所拥有。**
+
+这个标识是非常重要的，为了去保证unlock()被正确地在析构函数里面调用。
+
+如果实例拥有mutex，析构函数必须调用unlock，如果实例没有mutex，就不能调用unlock。
+
+**这个flag可以被查询，通过调用owns_lock()成员函数。**
+
+
+
+因为flag需要存储起来。因此，std::unqiue_lock对象是经典地大于std::lock_guard对象的大小。
+
+这里也有些抽象惩罚，因为flag需要去被更新和检查。
+
+
+
+这里有一些情况，std::unique_lock更适合手头的任务。
+
+因为你需要去确认额外的灵活性。一个例子就是deferred locking，延迟锁定，**还有一个例子就是lock的所有权要从一个作用域移交到另一个。**
+
+
+
+//55
 
 
 

@@ -72,6 +72,28 @@ namespace Note2dot8 {
 	}
 }
 
+namespace Note3do2dot6 {
+	//class some_big_object;
+	//class X
+	//{
+	//private:
+	//	some_big_object some_detail;
+	//	std::mutex m;
+	//public:
+	//	X(some_big_object const& sd) : some_detail(sd){}
+
+	//	friend void swap(X& lhs, X& rhs)
+	//	{
+	//		if(&lhs == &rhs)
+	//			return;
+	//		std::unique_lock<std::mutex> lock_a(lhs.m, std::defer_lock);
+	//		std::unique_lock<std::mutex> lock_b(rhs.m, std::defer_lock);//leaves mutexes unlocked
+	//		std::lock(lock_a, lock_b);//mutexes are locked here
+	//		swap(lhs.some_detail, rhs.some_detail);
+	//	}
+	//};
+}
+
 namespace Chapter2 {
 	using namespace Note2dot8;
 

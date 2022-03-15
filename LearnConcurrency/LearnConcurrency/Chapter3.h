@@ -224,7 +224,7 @@ namespace Note3dot7 {
 	hierarchical_mutex high_level_mutex(10000);
 	hierarchical_mutex low_level_mutex(5000);
 
-	int do_low_level_stuff();
+	int do_low_level_stuff(){ return 0; }
 
 	int low_level_func()
 	{
@@ -232,7 +232,7 @@ namespace Note3dot7 {
 		return do_low_level_stuff();
 	}
 
-	void high_level_stuff(int some_param);
+	void high_level_stuff(int some_param){}
 
 	void high_level_func()
 	{
@@ -246,7 +246,7 @@ namespace Note3dot7 {
 	}
 
 	hierarchical_mutex other_mutex(100);
-	void do_other_stuff();
+	void do_other_stuff(){}
 
 	void other_stuff()
 	{
