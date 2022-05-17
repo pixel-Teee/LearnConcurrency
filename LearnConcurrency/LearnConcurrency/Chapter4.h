@@ -1,8 +1,10 @@
 #pragma once
 #include <mutex>
 #include <condition_variable>
+#include <iostream>
 #include <queue>
 #include <memory>//std::shared_ptr
+#include <future>
 
 namespace Note4dot1 {
 	//std::mutex mut;
@@ -154,12 +156,18 @@ namespace Note4dot2 {
 	//			break;
 	//	}
 	//}
+
+	//using std::future to get the return value of an asynchronous task
+
+	int find_the_anwser_to_ltuae();
+
+	void do_other_stuff();
+
+	void test();
 }
 
 namespace Chapter4 {
 	//using namespace Note4dot2;
-
-	void M_Test() {
-		//threadsafe_queue<int32_t> data_queue;
-	}
+	
+	void M_Test();
 }
