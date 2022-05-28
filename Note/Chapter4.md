@@ -459,7 +459,35 @@ std::async允许你去传递额外的参数到函数中，通过添加额外的�
 
 
 
-//77
+如下图所示：
+
+![image-20220528184020300](../Image/4.2.2.png)
+
+
+
+std::async启动新线程取决于实现，或者当future等待的时候，是否任务在同步运行。
+
+大多数情况下这是你所想要的，但是你可以描述去使用一个额外的参数到std::async在函数去调用的时候。
+
+这个参数是std::launch的类型，并且可以是std::launch::deferred去表示函数调用是否要被延迟，直到wait()或者get()在未来被调用的时候，std::launch::async表示函数必须跑在自己的线程上，或者std::launch::deferred | std::launch::async表示实现可能被选择，最后一个选项是默认的。
+
+如果函数是deferred的，它可能真正地不会允许。
+
+![image-20220528185412697](../Image/4.2.3.png)
+
+默认情况下，是取决于实现的。
+
+
+
+std::async使得它容易去分隔算法到任务中，可以并发地运行。
+
+然而，这不是唯一的方法和一个std::future联系起来，对于一个任务，你可以选择做这件事情通过包裹任务在一个
+
+std::packaged_task&lt;&gt;的类模板中，或者通过书写代码去显式地设置值，使用std::promise&lt;&gt;类模板。
+
+std::package_task&lt;&gt;是一个更高层次的抽象，相比于std::promise。
+
+
 
 
 

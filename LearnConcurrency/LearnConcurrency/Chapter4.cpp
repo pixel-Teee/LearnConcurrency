@@ -28,6 +28,20 @@ void Note4dot2::do_other_stuff()
 
 }
 
+namespace Note4dot2dot1 {
+
+	//void X::foo(int, std::string const&)
+	//{
+
+	//}
+
+	//std::string X::bar(std::string const&)
+	//{
+
+	//}
+
+}
+
 void Note4dot2::test()
 {
 	{
