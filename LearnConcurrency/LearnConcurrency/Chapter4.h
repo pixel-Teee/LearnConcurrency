@@ -167,42 +167,82 @@ namespace Note4dot2 {
 }
 
 namespace Note4dot2dot1 {
-	struct X
-	{
-		void foo(int, std::string const&);
-		std::string bar(std::string const&);
-	};
-	X x;
-	auto f1 = std::async(&X::foo, &x, 42, "hello");//calls p->foo(42, "hello"), where p is &x
-	auto f2 = std::async(&X::bar, x, "goodbye");//calls tmpx.bar("goodbye"), where tmpx is a copy of x
-	struct Y
-	{
-		double operator()(double);
-	};
-	Y y;
-	auto f3 = std::async(Y(), 3.141);//calls tmpy(3.141) where tmpy is move-constructed from Y()
-	auto f4 = std::async(std::ref(y), 2.718);//calls y(2.718)
-	X baz(X&);
-	std::async(baz, std::ref(x));//calls baz(x)
-	struct move_only
-	{
-	public:
-		move_only();
-		move_only(move_only&&);
-		move_only(move_only const&) = delete;
-		move_only& operator=(move_only&&);
-		move_only& operator=(move_only const&) = delete;
+	//struct X
+	//{
+	//	void foo(int, std::string const&);
+	//	std::string bar(std::string const&);
+	//};
+	//X x;
+	//auto f1 = std::async(&X::foo, &x, 42, "hello");//calls p->foo(42, "hello"), where p is &x
+	//auto f2 = std::async(&X::bar, x, "goodbye");//calls tmpx.bar("goodbye"), where tmpx is a copy of x
+	//struct Y
+	//{
+	//	double operator()(double);
+	//};
+	//Y y;
+	//auto f3 = std::async(Y(), 3.141);//calls tmpy(3.141) where tmpy is move-constructed from Y()
+	//auto f4 = std::async(std::ref(y), 2.718);//calls y(2.718)
+	//X baz(X&);
+	//std::async(baz, std::ref(x));//calls baz(x)
+	//struct move_only
+	//{
+	//public:
+	//	move_only();
+	//	move_only(move_only&&);
+	//	move_only(move_only const&) = delete;
+	//	move_only& operator=(move_only&&);
+	//	move_only& operator=(move_only const&) = delete;
 
-		void operator() ();
-	};
-	auto f5 = std::async(move_only());//calls tmp() where tmp is constructed from std::move(move_only())
+	//	void operator() ();
+	//};
+	//auto f5 = std::async(move_only());//calls tmp() where tmp is constructed from std::move(move_only())
 
-	auto f6 = std::async(std::launch::async, Y(), 1.2);//run in new thread
-	auto f7 = std::async(std::launch::deferred, baz, std::ref(x));//run in wait() or get()
-	auto f8 = std::async(std::launch::async | std::launch::deferred, baz, std::ref(x));//implementation chooses
-	auto f9 = std::async(baz, std::ref(x));//implementation chooses
-	f7.wait();
+	//auto f6 = std::async(std::launch::async, Y(), 1.2);//run in new thread
+	//auto f7 = std::async(std::launch::deferred, baz, std::ref(x));//run in wait() or get()
+	//auto f8 = std::async(std::launch::async | std::launch::deferred, baz, std::ref(x));//implementation chooses
+	//auto f9 = std::async(baz, std::ref(x));//implementation chooses
+	//f7.wait();//invoke deferred function
 
+}
+
+namespace Note4dot2dot2 {
+	//std::mutex m;
+	//std::deque<std::packaged_task<void()>> tasks;
+
+	//bool gui_shutdown_message_received();
+	//void get_and_process_gui_message();
+
+	//void gui_thread()
+	//{
+	//	while (!gui_shutdown_message_received())//when gui received message, the gui will shutdown
+	//	{
+	//		get_and_process_gui_message();//repeatedly polling for gui messaged to handle
+	//		//such as user clicks, and for tasks on the task queue
+	//		//if there are no tasks on the queue, it loops again
+	//		//otherwise, it extracts the task from the queue
+	//		std::packaged_task<void()> task;
+	//		{
+	//			std::lock_guard<std::mutex> lk(m);
+	//			if (tasks.empty())
+	//				continue;
+	//			task = std::move(tasks.front());//extract the task from the queue
+	//			tasks.pop_front();
+	//		}
+	//		task();//run the task, future associated with the task, will then be made ready when the task completes
+	//	}
+	//}
+
+	//std::thread gui_bg_thread(gui_thread);
+
+	//template<typename Func>
+	//std::future<void> post_task_for_gui_thread(Func f)
+	//{
+	//	std::packaged_task<void()> task(f);
+	//	std::future<void> res = task.get_future();
+	//	std::lock_guard<std::mutex> lk(m);
+	//	tasks.push_back(std::move(task));
+	//	return res;
+	//}
 }
 
 namespace Chapter4 {

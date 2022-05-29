@@ -435,7 +435,7 @@ std::future&lt;void&gt;，std::shared_future&lt;void&gt;模板特例化应当被
 
 不像是返回给你一个std::thread对象去等待，std::async返回一个std::future对象，它最终会持有函数的返回值。
 
-当你需要值的时候，你只需要调用get()在future上，并且线程会阻塞直到future是ready状态的，然后返回值。
+当你需要值的时候，你只需要调用**get()**在future上，并且线程会阻塞直到future是ready状态的，然后返回值。
 
 ![image-20220517124713590](../Image/4.6.png)
 
@@ -489,7 +489,104 @@ std::package_task&lt;&gt;是一个更高层次的抽象，相比于std::promise�
 
 
 
+# Associating a task with a future
 
+std::packaged_task&lt;&gt;关联future到一个函数或者一个可调用对象上。
+
+当std::packaged_task&lt;&gt;被调用的时候，它调用关联的函数或者可调用对象，并且使得future **ready**，
+
+返回值存储作为关联的数据。这个可以被用来作为一个构建的块，对于线程池，或者其它的任务管理主题，
+
+比如运行每个任务在它自己的线程上，或者顺序地运行它们在一个特定背景的线程上。如果大型操作可以被分割成自包含的子任务，这些中的每一个可以被包裹进std::packaged_task&lt;&gt;的实例当中，并且实例被传递进任务规划或者线程池当中。这个抽象出了任务的细节，**规划器处理std::packaged_task&lt;&gt;实例**，而不是独立的函数。
+
+
+
+std::packaged_task&lt;&gt;类模板的模板参数是一个函数签名。
+
+当你构造一个std::packaged_task的实例的时候，你必须传递一个函数或者可调用对象，它们可以接受确切的参数，并且那个返回类型兼容确切的返回类型。类型不需要匹配地很精确，你可以构造一个std::packaged_task&lt;double(double)&gt;从一个函数，这个函数接受一个int，并且返回一个float，因为类型进行了隐式地转换。
+
+
+
+确切的函数签名的返回值标识了std:future&lt;&gt;的返回类型，从get_future()成员函数中，
+
+然而函数签名的参数列表被用于去描述packaged task's的函数调用操作符的签名，
+
+例如，std::packaged_task&lt;std::string(std::vector&lt;char&gt;*,int)的部分类定义显式在如下：
+
+
+
+```c++
+//partial class definition for a specialization of std::packaged_task<>
+template<>
+class packaged_task<std::string(std::vector<char>*, int)>
+{
+public:
+	template<typename Callable>
+	explicit packaged_task(Callable&& f);
+	std::future<std::string> get_future();
+	void operator()(std::vector<char>*, int);
+};
+```
+
+一个特化版本。
+
+
+
+std::packaged_task对象因此是一个可调用对象，并且可以被包裹进std::function对象，传递到std::thread作为线程函数，传递到另一个函数，这个函数要求一个可调用对象，或者甚至直接地调用。
+
+当std::packaged_task被调用作为一个函数对象，被提供的参数到函数调用操作符，被传递进内部包含的函数，
+
+并且返回的值被存储起来作为异步的结果，在std::future，通过get_future()获取。
+
+你可以因此包裹一个task进std::packaged_task，并且取得future，在传递std::packaged_task对象到别的地方之前，由于某些原因。当你需要结果的时候，你可以等待future变得ready。
+
+
+
+如下的例子展示了这个行为：
+
+
+
+## PASSING TASKS BETWEEN THREADS
+
+在线程之间传递任务。
+
+
+
+一些GUI框架要求GUI的更新需要完成在某些确切的线程，
+
+如果另一个线程需要去更新GUI，它必须发送一个消息到正确的线程。
+
+std::packaged_task提供了一种方式做这个，不需要一个自定义的消息对于每一个和每一个GUI相关的活动。
+
+
+
+![image-20220529151106918](../Image/4.2.4.png)
+
+运行task，关联到task的future，将在task运行完毕之后，变得准备。
+
+
+
+![image-20220529151231381](../Image/4.2.5.png)
+
+传递一个task到队列中也是相当简单的，一个新的packaged task从提供的函数中被创建，
+
+future从task中获取，通过调用get_future()成员函数，并且task被放置在列表中，在future被返回给调用者的时候。传递消息到GUI线程的代码，可以然后等待future，如果它需要知道task已经完成了，或者它可以扔掉future，如果它不需要去知道。
+
+
+
+这个例子使用了std::packaged_task&lt;void&gt;对于task，它包裹了一个函数或者任何其它可调用对象，不接受任何参数，并且返回void(如果它返回任何其它东西，那么返回值会被抛弃)。
+
+这是最简单的可能的任务，但是就像你之前看到的，std::packaged_task也可以被用于复杂的场景-通过描述一个不同的函数签名作为模板参数，你可以改变返回类型和函数调用操作符的参数类型。
+
+
+
+那些不能表示为简单函数的任务，或者这些任务可能来自多个地方怎么处理呢？
+
+这些情况可以被解决通过第三种方式，创建一个future:使用std::promise去显式地设置值。
+
+
+
+//81
 
 
 
