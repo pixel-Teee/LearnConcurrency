@@ -121,6 +121,20 @@ C++标准库提供了两个条件变量的实现：std::condition_variable和std
 
 ![image-20220504131411522](../Image/4.1.png)
 
+这里，出了错，这是老书。
+
+
+
+```c++
+{
+	std::lock_guard<std::mutex> lk(mut);
+	data_queue.push(data);
+}//必须之前解锁
+data_cond.notify_one();
+```
+
+
+
 首先，有一个队列，用来在两个线程之间传递数据。当数据准备好了之后，线程准备数据，并且锁定互斥量，
 
 保护队列，使用std::lock_guard，并且压入数据到队列中。然后，它调用notify_one()成员函数在条件变量实例，
@@ -582,7 +596,7 @@ future从task中获取，通过调用get_future()成员函数，并且task被放
 
 那些不能表示为简单函数的任务，或者这些任务可能来自多个地方怎么处理呢？
 
-这些情况可以被解决通过第三种方式，创建一个future:使用std::promise去显式地设置值。
+这些情况可以被解决通过第三种方式，创建一个future使用std::promise去显式地设置值。
 
 
 
